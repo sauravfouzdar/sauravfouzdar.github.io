@@ -1,58 +1,20 @@
 body {
-    background-color: #666;
-    margin: 0;
-    padding: 0;
-    color: #000;
+    line-height: 1.4;
+    font-size: 16px;
+    padding: 0 10px;
+    margin: 50px auto;
+    max-width: 650px;
 }
 
 #contents {
-    margin: 10px 15%;
-    padding: 10px 30px;
-    background-color: #fff;
-    color: #000;
-    font-family: times, serif;
-    font-size: 1em;
-    line-height: 1.6;
+    max-width: 42em;
+    margin: 70px auto 15px;
 }
 
-a {
-    color: #339;
-}
-
-ul li {
-    margin-top: 4px;
-}
-
-#profile-photo-wrap {
-    float: right;
-    width: 180px;
-    height: 180px;
-    overflow: hidden;
-    margin: 0 0 16px 24px;
-}
-
-#profile-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    transform: scale(1.2);
-    transform-origin: center top;
-}
-
-h3 {
-    margin-top: 1.4em;
-    margin-bottom: 0.4em;
-}
-
-p {
-    margin-top: 0.8em;
-    margin-bottom: 0;
-}
-
-@media (max-width: 700px) {
-    #contents {
-        margin: 0;
-        padding: 10px 20px;
-    }
+#footnote {
+    position: fixed;
+    bottom: 8px;
+    left: 10px;
+    margin: 0;
+    font-size: 10px;
 }
