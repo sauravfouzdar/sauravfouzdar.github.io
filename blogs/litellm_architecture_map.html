@@ -1,0 +1,849 @@
+<!doctype html>
+<!-- Created using Anthropic Claude (Claude Code) on 2026-09-28 from a survey of the litellm repository. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LiteLLM System Map</title>
+</head>
+<body style="margin:0">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#f7f6f2; --card:#ffffff; --ink:#1c2128; --ink-2:#4b5563; --muted:#6f7886; --line:#d8d5cd; --line-2:#e8e6df;
+  --lane-client:#5b6472; --lane-deploy:#0e7c7b; --lane-internal:#0b6e8f; --lane-sdk:#3554d1; --lane-rust:#b3541e; --lane-ext:#8a6d1f;
+  --edge:#9aa0a8; --edge-on:#1c2128; --halo:#f7f6f2;
+  --d0:#0e7c7b; --d1:#8a6d1f; --d2:#3554d1; --d3:#b3541e; --d4:#7a3fb8; --d5:#a8323e; --d6:#2f7d4a; --d7:#4a6fa5; --d8:#8d5a2b; --d9:#5b6472;
+  --focus:#3554d1;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#15181d; --card:#1d2127; --ink:#e7e5df; --ink-2:#b7bcc5; --muted:#8d95a1; --line:#343a43; --line-2:#272c34;
+    --lane-client:#9aa3b1; --lane-deploy:#3fb8b6; --lane-internal:#4fb1d6; --lane-sdk:#7f95ff; --lane-rust:#e08a52; --lane-ext:#d1ac4c;
+    --edge:#5b6370; --edge-on:#e7e5df; --halo:#15181d;
+    --d0:#3fb8b6; --d1:#d1ac4c; --d2:#7f95ff; --d3:#e08a52; --d4:#b586e6; --d5:#e0707a; --d6:#5fbf7d; --d7:#7ea1d8; --d8:#cf9260; --d9:#9aa3b1;
+    --focus:#7f95ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#15181d; --card:#1d2127; --ink:#e7e5df; --ink-2:#b7bcc5; --muted:#8d95a1; --line:#343a43; --line-2:#272c34;
+  --lane-client:#9aa3b1; --lane-deploy:#3fb8b6; --lane-internal:#4fb1d6; --lane-sdk:#7f95ff; --lane-rust:#e08a52; --lane-ext:#d1ac4c;
+  --edge:#5b6370; --edge-on:#e7e5df; --halo:#15181d;
+  --d0:#3fb8b6; --d1:#d1ac4c; --d2:#7f95ff; --d3:#e08a52; --d4:#b586e6; --d5:#e0707a; --d6:#5fbf7d; --d7:#7ea1d8; --d8:#cf9260; --d9:#9aa3b1;
+  --focus:#7f95ff;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1360px;margin:0 auto}
+h1,h2,h3{font-family:"Fraunces","Iowan Old Style",Georgia,serif;font-weight:600;text-wrap:balance;margin:0;letter-spacing:-0.01em}
+h1{font-size:clamp(30px,4vw,44px);line-height:1.1}
+h2{font-size:26px;line-height:1.2}
+h3{font-size:17px;font-family:"IBM Plex Sans",system-ui,sans-serif;font-weight:600}
+p{margin:0;max-width:68ch}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:0.92em}
+header{padding-block:40px 24px;display:grid;gap:14px;border-bottom:1px solid var(--line)}
+.title-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px}
+.credit{color:var(--muted);font-weight:500;font-size:15px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:0.09em;color:var(--muted);font-weight:500}
+.lede{color:var(--ink-2);font-size:16px}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.facts b{color:var(--ink);font-weight:600}
+section{padding-block:36px 8px}
+.sec-head{display:grid;gap:8px;margin-bottom:18px}
+.sec-head p{color:var(--ink-2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.ln{width:22px;height:0;border-top:2px solid var(--edge-on);display:inline-block}
+.ln.dash{border-top-style:dashed}
+
+/* architecture */
+.arch{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.scroll svg{display:block;min-width:1000px;max-width:100%;height:auto}
+.panel{position:sticky;top:12px;border:1px solid var(--line);border-radius:6px;background:var(--card);padding:16px;display:grid;gap:12px;font-size:14px;min-height:200px}
+.panel .kicker{font-size:11.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:500}
+.panel h3{font-size:18px}
+.panel .desc{color:var(--ink-2)}
+.panel ul{margin:0;padding-left:0;list-style:none;display:grid;gap:5px}
+.panel li{font-size:13px;color:var(--ink-2);line-height:1.4}
+.panel li code{color:var(--ink);word-break:break-all}
+.panel .edge-row{display:grid;grid-template-columns:14px 1fr;gap:6px;align-items:baseline}
+.panel .edge-row .dir{color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.panel .hint{color:var(--muted)}
+.panel button{font:inherit;font-size:12.5px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer;justify-self:start}
+.panel button:hover{border-color:var(--ink-2)}
+/* svg pieces */
+.node{cursor:pointer}
+.node rect{fill:var(--card);stroke:var(--ink-2);stroke-width:1.1;rx:4}
+.node .bar{stroke:none}
+.node text{fill:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:12.5px;font-weight:600}
+.node text.sub{fill:var(--muted);font-weight:400;font-size:11px;font-family:"IBM Plex Mono",monospace}
+.node.dim{opacity:0.28}
+.node.sel rect{stroke:var(--edge-on);stroke-width:2}
+.lane-title{fill:var(--muted);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;font-family:"IBM Plex Sans",system-ui,sans-serif}
+.lane-sub{fill:var(--muted);font-size:10.5px;font-family:"IBM Plex Mono",monospace}
+.edge path{fill:none;stroke:var(--edge);stroke-width:1.1;opacity:0.55}
+.edge.on path{stroke:var(--edge-on);stroke-width:1.8;opacity:1}
+.edge.off{opacity:0.10}
+.edge text{display:none;font-size:11px;fill:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.edge.on text{display:block}
+#arrow path,#arrowOn path{fill:var(--edge)}
+#arrowOn path{fill:var(--edge-on)}
+
+/* lifecycle */
+.life{overflow-x:auto}
+.life svg{display:block;min-width:900px;max-width:100%;height:auto}
+.life .stage rect{fill:var(--card);stroke:var(--ink-2);stroke-width:1.1;rx:4}
+.life text{fill:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:12px;font-weight:600}
+.life text.sub{fill:var(--muted);font-weight:400;font-size:10.5px;font-family:"IBM Plex Mono",monospace}
+.life text.store{fill:var(--ink-2);font-size:11px;font-weight:500}
+.life .flow{fill:none;stroke:var(--edge-on);stroke-width:1.6}
+.life .touch{fill:none;stroke-width:1.3;stroke-dasharray:3 3}
+.life .touch.pg{stroke:var(--d1)}
+.life .touch.rd{stroke:var(--d5)}
+.life .storebox rect{fill:none;stroke-width:1.2;rx:4}
+.life .storebox.pg rect{stroke:var(--d1)}
+.life .storebox.rd rect{stroke:var(--d5)}
+figure{margin:0;display:grid;gap:10px}
+figcaption{font-size:13px;color:var(--muted);max-width:80ch}
+
+/* db map */
+.dbtools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;font-size:13px;color:var(--ink-2)}
+.dbtools label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.dbtools input[type=search]{font:inherit;font-size:13px;padding:5px 9px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink);min-width:200px}
+.dbwrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.dbmap{position:relative}
+.clusters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;position:relative;z-index:1}
+.cluster{border:1px solid var(--line);border-radius:6px;background:var(--card);padding:12px 12px 12px;display:grid;gap:9px;align-content:start;border-top:3px solid var(--dc)}
+.cluster h3{font-size:13.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.cluster h3 small{color:var(--muted);font-weight:400;font-size:12px;font-variant-numeric:tabular-nums}
+.cluster .note{font-size:12px;color:var(--muted);line-height:1.35}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font:inherit;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;line-height:1.3;text-align:left}
+.pill:hover{border-color:var(--dc)}
+.pill.sel{background:var(--dc);border-color:var(--dc);color:var(--card)}
+.pill.near{border-color:var(--dc);box-shadow:inset 0 0 0 1px var(--dc)}
+.pill.dim{opacity:0.35}
+.pill.hit{outline:2px solid var(--focus);outline-offset:1px}
+.pill:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.node:focus-visible rect{stroke:var(--focus);stroke-width:2}
+.overlay{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:visible}
+.overlay path{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:0.85}
+.overlay path.ref{stroke-dasharray:4 3}
+.overlay path.all{stroke:var(--edge);stroke-width:1;opacity:0.35}
+.overlay text{font-size:10.5px;fill:var(--ink);font-family:"IBM Plex Mono",monospace;paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+.dbpanel .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}
+.dbpanel .kv dt{color:var(--muted)}
+.dbpanel .kv dd{margin:0;color:var(--ink)}
+.dbpanel .links{display:grid;gap:4px;font-size:13px}
+.dbpanel .links div{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline}
+.dbpanel .links .col{color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11.5px}
+.dbpanel .links button{font:inherit;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;text-align:left;text-decoration:underline dotted var(--muted)}
+
+/* dir table */
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap}
+td .tag{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+tbody tr{scroll-margin-top:12px}
+
+@media (max-width: 980px){
+  .arch,.dbwrap{grid-template-columns:1fr}
+  .panel{position:static}
+  .clusters{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 620px){
+  .clusters{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){
+  .node,.pill,.edge{transition:opacity .15s ease}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Repository map · BerriAI/litellm</div>
+  <div class="title-row">
+    <h1>LiteLLM System Map</h1>
+    <h3 class="credit">Created using Anthropic Claude</h3>
+  </div>
+  <p class="lede">How the deployable services, the gateway internals, the Python SDK core, the Rust extension and the Postgres schema fit together. Click any box or table to see what it is made of and what it talks to.</p>
+  <div class="facts">
+    <span><b>82</b> Postgres tables in <code>schema.prisma</code></span>
+    <span><b>145</b> provider folders in <code>litellm/llms/</code></span>
+    <span><b>85</b> callback integrations</span>
+    <span><b>~45</b> Rust crates</span>
+    <span><b>~190</b> Prisma migrations</span>
+    <span>snapshot 2026-09-28</span>
+  </div>
+</header>
+
+<section id="services">
+  <div class="sec-head">
+    <h2>Services and who talks to whom</h2>
+    <p>Left to right: the clients, the processes you actually run, the layers inside the proxy, the SDK code they call, and the systems outside the repo. Every deployable is the same FastAPI app from <code>litellm/proxy/proxy_server.py</code>; the split images differ only by route allowlist.</p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--lane-client)"></i>clients</span>
+      <span><i class="sw" style="background:var(--lane-deploy)"></i>deployables</span>
+      <span><i class="sw" style="background:var(--lane-internal)"></i>gateway internals</span>
+      <span><i class="sw" style="background:var(--lane-sdk)"></i>SDK core (litellm/)</span>
+      <span><i class="sw" style="background:var(--lane-rust)"></i>Rust</span>
+      <span><i class="sw" style="background:var(--lane-ext)"></i>external systems</span>
+    </div>
+  </div>
+  <div class="arch">
+    <figure>
+      <div class="scroll" id="archScroll"></div>
+      <figcaption>Arrows show calls, mounts and data flow. Select a node to light up its edges with labels; the panel lists its key files.</figcaption>
+    </figure>
+    <aside class="panel" id="archPanel" aria-live="polite"></aside>
+  </div>
+</section>
+
+<section id="lifecycle">
+  <div class="sec-head">
+    <h2>One chat completion, end to end</h2>
+    <p>The stages a <code>POST /v1/chat/completions</code> passes through, and which store each stage touches. Redis absorbs the hot path; Postgres only sees a batched write a minute later.</p>
+  </div>
+  <figure class="life">
+    <div id="lifeSvg"></div>
+    <figcaption>Dashed drops mark a read or write against Redis (red) or Postgres (ochre). Auth reads Postgres only on a cache miss.</figcaption>
+  </figure>
+</section>
+
+<section id="database">
+  <div class="sec-head">
+    <h2>Postgres schema, grouped by domain</h2>
+    <p>All 82 models from <code>schema.prisma</code>. Solid links are declared <code>@relation</code> foreign keys. Dashed links are references by column name only (for example <code>api_key</code> holds the hashed token, <code>team_id</code> points at a team) that Prisma does not enforce.</p>
+    <div class="legend">
+      <span><i class="ln"></i>declared relation</span>
+      <span><i class="ln dash"></i>reference by column name</span>
+    </div>
+  </div>
+  <div class="dbtools">
+    <input type="search" id="tblSearch" placeholder="Find a table" aria-label="Find a table">
+    <label><input type="checkbox" id="allLinks"> show every link</label>
+    <span id="dbCount"></span>
+  </div>
+  <div class="dbwrap">
+    <div class="dbmap" id="dbmap">
+      <div class="clusters" id="clusters"></div>
+      <svg class="overlay" id="dbOverlay" aria-hidden="true"></svg>
+    </div>
+    <aside class="panel dbpanel" id="dbPanel" aria-live="polite"></aside>
+  </div>
+</section>
+
+<section id="dirs">
+  <div class="sec-head">
+    <h2>Where things live</h2>
+    <p>Top-level directories and what each one is for.</p>
+  </div>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Path</th><th>Kind</th><th>What it is</th></tr></thead>
+      <tbody id="dirRows"></tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<script>
+/* ---------------- architecture graph ---------------- */
+const LANES = [
+  {id:'client', title:'Clients', sub:'outside the cluster', color:'var(--lane-client)'},
+  {id:'deploy', title:'Deployables', sub:'processes and images', color:'var(--lane-deploy)'},
+  {id:'internal', title:'Gateway internals', sub:'litellm/proxy/', color:'var(--lane-internal)'},
+  {id:'sdk', title:'SDK core', sub:'litellm/ and litellm-rust/', color:'var(--lane-sdk)'},
+  {id:'ext', title:'External systems', sub:'not in this repo', color:'var(--lane-ext)'},
+];
+const N = [
+  // clients
+  {id:'c_sdk', lane:0, row:0, t:'OpenAI / Anthropic SDKs', s:'any HTTP client',
+   d:'Applications point an OpenAI or Anthropic SDK at the gateway with a virtual key. They see one API surface regardless of the upstream provider.',
+   f:['/v1/chat/completions, /v1/embeddings, /v1/responses', '/v1/messages (Anthropic shape)', 'passthrough: /openai/*, /anthropic/*, /bedrock/*, /vertex_ai/*']},
+  {id:'c_agent', lane:0, row:1, t:'Coding agents', s:'Claude Code, Codex, MCP hosts',
+   d:'Agents use the proxy both as an LLM endpoint and as an MCP gateway that fans out to upstream MCP servers, with skills, memory and Claude Code plugin marketplace on top.',
+   f:['/mcp, /mcp/sse, /toolset/{name}/mcp', '/v1/skills, /v1/memory', 'LiteLLM_ClaudeCodePluginTable feeds the plugin marketplace']},
+  {id:'c_browser', lane:0, row:2, t:'Admin browser', s:'humans running the proxy',
+   d:'Operators use the Admin UI to manage keys, teams, models, guardrails, MCP servers, budgets and to read spend logs.',
+   f:['single image: http://host:4000/ui', 'split deployment: ui pod on :3000 behind the ingress']},
+  {id:'c_vscode', lane:0, row:3, t:'VS Code extension', s:'vscode-extension/',
+   d:'Registers LiteLLM as a language-model provider inside VS Code chat. Stores the virtual key in VS Code secret storage.',
+   f:['vscode-extension/src/{extension,provider,gateway,models,stream}.ts', 'GET /model_group/info for the model list', 'POST /v1/chat/completions (streaming, tools, images)']},
+  {id:'c_tf', lane:0, row:4, t:'Terraform provider', s:'terraform/provider (Go)',
+   d:'Infrastructure as code for the management API: keys, teams, users, orgs, models, budgets, guardrails, MCP servers, vector stores, agents, prompts, tags, access groups.',
+   f:['terraform/provider/', 'calls /key, /team, /user, /organization, /model, /budget, /guardrails, /mcp ...']},
+  {id:'c_prom', lane:0, row:5, t:'Prometheus scraper', s:'compose prometheus :9090',
+   d:'Scrapes the metrics server. In the split deployment this is a sidecar; in the single image it is a separate process started by proxy_cli.',
+   f:['prometheus.yml', 'GET /metrics']},
+
+  // deployables
+  {id:'d_gateway', lane:1, row:0, t:'gateway :4000', s:'gateway/ · LLM request routes',
+   d:'The proxy app trimmed to request-serving routes via gateway/routes/allowlist.py. gateway/launch.py supervises uvicorn workers and can start an in-pod PgBouncer. The single-image proxy (Dockerfile, docker-compose, render.yaml) is this same app without the trim, on the same port.',
+   f:['gateway/main.py, gateway/launch.py, gateway/routes/allowlist.py', 'litellm/proxy/proxy_server.py (app = FastAPI), proxy_cli.py', 'litellm/proxy/middleware/ (security headers, request size, admission control, in-flight, budget release)', 'Dockerfile copies litellm/rust_bridge/_native*.so and fails without it']},
+  {id:'d_backend', lane:1, row:1, t:'backend :4001', s:'backend/ · management routes',
+   d:'The same app trimmed to admin routes via backend/routes/allowlist.py: keys, users, teams, orgs, customers, SSO and login, models, spend, settings, audit, /model_group. Static UI mounts are removed.',
+   f:['backend/main.py, backend/routes/allowlist.py, backend/Dockerfile', 'docker/component_entrypoint.sh', 'DATABASE_URL built from DATABASE_* env by litellm/proxy/db/db_url_settings.py']},
+  {id:'d_ui', lane:1, row:2, t:'Admin UI', s:'ui/litellm-dashboard · Next.js',
+   d:'A static Next.js 16 export. In the single image it is copied into litellm/proxy/_experimental/out and mounted at /ui by proxy_server.py. In the split deployment nginx serves it on :3000 and the ingress routes API paths to gateway or backend.',
+   f:['ui/litellm-dashboard/src/app/(dashboard)/ (~40 pages)', 'ui/litellm-dashboard/src/components/networking.tsx (API client, ~8k lines)', 'ui/litellm-dashboard/build_ui.sh -> litellm/proxy/_experimental/out', 'ui/Dockerfile + ui/nginx.conf (split build)']},
+  {id:'d_mcp', lane:1, row:3, t:'MCP gateway', s:'_experimental/mcp_server',
+   d:'ASGI MCP server mounted on the proxy at / and /mcp. Registers upstream MCP servers from the DB, handles OAuth and BYOK credentials, filters tools semantically and translates guardrails.',
+   f:['litellm/proxy/_experimental/mcp_server/server.py (handle_streamable_http_mcp)', 'mcp_server_manager.py, tool_registry.py, tool_search.py, semantic_tool_filter.py', 'auth/, outbound_credentials/, byok_oauth_endpoints.py, gateway_dcr_flow.py', 'litellm/proxy/mcp_registry.json (well-known servers for one-click add)']},
+  {id:'d_metrics', lane:1, row:4, t:'Metrics server', s:'prometheus_metrics_server.py',
+   d:'Separate process that aggregates PROMETHEUS_MULTIPROC_DIR from all uvicorn workers and serves /metrics. Started by proxy_cli --prometheus_metrics_port or as a Helm sidecar.',
+   f:['litellm/proxy/prometheus_metrics_server.py', 'litellm/integrations/prometheus.py, prometheus_services.py']},
+  {id:'d_collector', lane:1, row:5, t:'Collector sidecar', s:'litellm/proxy/collector.py',
+   d:'Optional sidecar (LITELLM_JOB_ROLE=collector). Gateway workers ship spend events to it over a socket and it owns the Postgres spend writes, so request workers never block on the DB.',
+   f:['litellm/proxy/collector.py', 'litellm/proxy/spend_tracking/spend_event_producer.py', 'LITELLM_COLLECTOR_ADDRESS']},
+  {id:'d_migrate', lane:1, row:6, t:'Migrations job', s:'migrations/ · proxy-extras',
+   d:'Runs before gateway and backend roll out (Helm pre-upgrade hook or ECS task). Applies the ~190 Prisma SQL migrations with prisma migrate deploy, with recovery for stuck states.',
+   f:['migrations/run.py, migrations/Dockerfile', 'litellm-proxy-extras/litellm_proxy_extras/{utils.py,migrations/,schema.prisma}', 'litellm/proxy/prisma_migration.py, litellm/proxy/db/check_migration.py']},
+
+  // internals
+  {id:'g_auth', lane:2, row:0, t:'Auth', s:'proxy/auth/',
+   d:'Resolves the caller from a virtual key, JWT, OAuth2 token or SSO session, then checks route access, budgets, team and org membership and model allowlists. Returns UserAPIKeyAuth.',
+   f:['litellm/proxy/auth/user_api_key_auth.py', 'auth_checks.py, route_checks.py, model_checks.py', 'handle_jwt.py, oauth2_check.py, litellm_license.py']},
+  {id:'g_hooks', lane:2, row:1, t:'Hooks and rate limits', s:'proxy/hooks/ · ProxyLogging',
+   d:'ProxyLogging runs pre-call, during-call and post-call hooks: parallel request limiter, dynamic rate limiter, per-session and per-model budget limiters, prompt injection detection, response id security.',
+   f:['litellm/proxy/utils.py (class ProxyLogging)', 'litellm/proxy/hooks/parallel_request_limiter_v3.py, dynamic_rate_limiter_v3.py', 'max_budget_per_session_limiter.py, model_max_budget_limiter.py', 'litellm/proxy/litellm_pre_call_utils.py']},
+  {id:'g_guard', lane:2, row:2, t:'Guardrails and policy engine', s:'proxy/guardrails · proxy/policy_engine',
+   d:'Guardrails wrap vendor moderation APIs (61 hook modules). The policy engine matches policies to teams, keys, models and tags, then runs a pipeline of guardrail steps.',
+   f:['litellm/proxy/guardrails/{init_guardrails.py,guardrail_registry.py,guardrail_hooks/}', 'litellm/proxy/policy_engine/{policy_matcher.py,pipeline_executor.py,condition_evaluator.py}', 'management_endpoints/policy_endpoints/, guardrails/guardrail_endpoints.py']},
+  {id:'g_llm', lane:2, row:3, t:'LLM endpoint groups', s:'chat · messages · responses …',
+   d:'Each API surface has its own router folder. All converge on ProxyBaseLLMRequestProcessing, which enriches the request and hands it to route_request.',
+   f:['litellm/proxy/common_request_processing.py', 'litellm/proxy/route_llm_request.py (route_request)', 'anthropic_endpoints/, response_api_endpoints/, batches_endpoints/, openai_files_endpoints/, image_endpoints/, rerank_endpoints/, realtime_endpoints/, vector_store_endpoints/, rag_endpoints/, agent_endpoints/ (A2A)', 'pass_through_endpoints/llm_passthrough_endpoints.py']},
+  {id:'g_mgmt', lane:2, row:4, t:'Management API', s:'proxy/management_endpoints/',
+   d:'CRUD for every admin entity plus SSO, SCIM, usage dashboards and config overrides. This is what the Admin UI, the Terraform provider and the VS Code model list call.',
+   f:['key_management_endpoints.py, team_endpoints.py, internal_user_endpoints.py, organization_endpoints.py, customer_endpoints.py', 'model_management_endpoints.py, budget_management_endpoints.py, tag_management_endpoints.py', 'mcp_management_endpoints.py, tool_management_endpoints.py, access_group_endpoints.py', 'ui_sso.py, sso/, scim/, usage_endpoints/, management_v1/']},
+  {id:'g_spend', lane:2, row:5, t:'Spend tracking and DB writer', s:'spend_tracking · db/',
+   d:'The cost callback turns each response into a spend event. DBSpendUpdateWriter buffers increments in Redis and flushes SpendLogs and Daily*Spend rows in batches.',
+   f:['litellm/proxy/hooks/proxy_track_cost_callback.py (_ProxyDBLogger)', 'litellm/proxy/db/db_spend_update_writer.py', 'litellm/proxy/db/db_transaction_queue/{spend_update_queue,daily_spend_update_queue,redis_update_buffer,pod_lock_manager}.py', 'litellm/proxy/spend_tracking/{spend_tracking_utils,budget_reservation}.py']},
+  {id:'g_db', lane:2, row:6, t:'Data access (Prisma)', s:'PrismaClient · repositories/',
+   d:'PrismaClient wraps the generated Prisma Python client, with an optional read-replica router and PgBouncer. Repositories give typed CRUD per table; models hold the Pydantic shapes.',
+   f:['litellm/proxy/utils.py (class PrismaClient)', 'litellm/proxy/db/{prisma_client.py,routing_prisma_wrapper.py,pgbouncer.py,db_url_settings.py}', 'litellm/repositories/ (BaseRepository, unit_of_work.py)', 'litellm/models/ (LiteLLM_VerificationToken, LiteLLM_TeamTable, ...)']},
+  {id:'g_jobs', lane:2, row:7, t:'Background jobs', s:'APScheduler · ProxyStartupEvent',
+   d:'update_spend every 60s, reset_budget every 10 minutes, add_deployment sync from DB every 10s, spend log cleanup, key rotation hourly, batch and responses cost checks, health checks.',
+   f:['litellm/proxy/proxy_server.py (ProxyStartupEvent.initialize_scheduled_background_jobs)', 'litellm/proxy/common_utils/{reset_budget_job,key_rotation_manager}.py', 'litellm/proxy/db/db_transaction_queue/spend_log_cleanup.py', 'litellm/proxy/health_check.py']},
+  {id:'g_ent', lane:2, row:8, t:'Enterprise package', s:'enterprise/litellm_enterprise',
+   d:'Separately installed package, imported with a guarded fallback. Adds routes, hooks and callbacks behind a license check: audit logs, SCIM extras, managed files and vector stores, secret detection, PagerDuty and email alerts.',
+   f:['enterprise/litellm_enterprise/proxy/{enterprise_routes.py,proxy_server.py,auth/,hooks/,management_endpoints/}', 'enterprise/litellm_enterprise/enterprise_callbacks/', 'litellm/proxy/enterprise -> ../../enterprise (symlink)', 'litellm/proxy/auth/litellm_license.py']},
+
+  // sdk
+  {id:'s_router', lane:3, row:0, t:'Router', s:'litellm/router.py',
+   d:'Picks a deployment for a model group, applies routing strategy, retries, fallbacks and cooldowns. Its DualCache keeps TPM/RPM counters and cooldown state in memory plus Redis.',
+   f:['litellm/router.py (class Router)', 'litellm/router_strategy/ (lowest_latency, simple_shuffle, ...)', 'litellm/router_utils/', 'router_plugins.json']},
+  {id:'s_main', lane:3, row:1, t:'SDK entry points', s:'litellm/main.py · utils.py',
+   d:'completion, acompletion, embedding, image_generation and friends. utils.get_llm_provider resolves the model string to a provider, then the call goes to that provider config.',
+   f:['litellm/main.py', 'litellm/utils.py (get_llm_provider, wrapper with logging)', 'litellm/{messages,responses,embeddings,chat_completions,ocr}/dispatch.py (Python vs Rust route choice)']},
+  {id:'s_llms', lane:3, row:2, t:'Provider transformations', s:'litellm/llms/<provider>/',
+   d:'One Config class per provider and API shape, converting OpenAI-style requests to the provider wire format and back. 145 provider folders.',
+   f:['litellm/llms/base_llm/chat/transformation.py (BaseConfig)', 'litellm/llms/anthropic/chat/transformation.py', 'litellm/llms/bedrock/chat/converse_transformation.py', 'litellm/llms/vertex_ai/gemini/transformation.py', 'litellm/litellm_core_utils/prompt_templates/factory.py']},
+  {id:'s_http', lane:3, row:3, t:'HTTP handler', s:'llms/custom_httpx/',
+   d:'BaseLLMHTTPHandler orchestrates transform_request, the HTTP call and transform_response, including streaming.',
+   f:['litellm/llms/custom_httpx/llm_http_handler.py', 'litellm/llms/custom_httpx/http_handler.py, aiohttp_transport.py', 'litellm/litellm_core_utils/streaming_handler.py']},
+  {id:'s_log', lane:3, row:4, t:'Logging and cost', s:'logging + cost_calculator',
+   d:'The Logging object attached to each call computes response cost from the price table and fans out success and failure events to every registered callback.',
+   f:['litellm/litellm_core_utils/litellm_logging.py (class Logging)', 'litellm/cost_calculator.py', 'model_prices_and_context_window.json', 'litellm/litellm_core_utils/llm_response_utils/response_metadata.py']},
+  {id:'s_integ', lane:3, row:5, t:'Callback integrations', s:'litellm/integrations/ (85)',
+   d:'CustomLogger subclasses that ship traces, metrics and logs to observability vendors and buckets. Run asynchronously off the request path.',
+   f:['litellm/integrations/custom_logger.py', 'prometheus.py, langfuse/, datadog/, opentelemetry.py, arize/, langsmith.py', 's3_v2.py, gcs_bucket/, azure_storage/, sqs.py, SlackAlerting/']},
+  {id:'s_cache', lane:3, row:6, t:'Caching', s:'litellm/caching/',
+   d:'DualCache (memory plus Redis) backs auth, the router and the rate limiters. LLMCachingHandler caches responses and embeddings, with semantic variants on Redis, Valkey and Qdrant.',
+   f:['litellm/caching/dual_cache.py, redis_cache.py, redis_cluster_cache.py', 'litellm/caching/caching_handler.py (LLMCachingHandler)', 'litellm/_redis.py (client factory)', 'litellm/proxy/utils.py (InternalUsageCache)']},
+  {id:'s_secrets', lane:3, row:7, t:'Secret managers', s:'litellm/secret_managers/',
+   d:'Resolves os.environ/ and vault references in config to real values from cloud secret stores. Can dispatch to the Rust implementation.',
+   f:['litellm/secret_managers/main.py, dispatch.py', 'aws_secret_manager_v2.py, google_secret_manager.py, hashicorp_secret_manager.py, cyberark_secret_manager.py']},
+  {id:'s_mcpc', lane:3, row:8, t:'MCP client', s:'experimental_mcp_client/',
+   d:'Outbound MCP client over httpx with SigV4, basic and bearer auth, plus conversion between MCP and OpenAI tool formats. Used by the MCP gateway and the Responses API MCP handler.',
+   f:['litellm/experimental_mcp_client/client.py, tools.py', 'litellm/responses/mcp/litellm_proxy_mcp_handler.py']},
+  {id:'s_rust', lane:3, row:9, t:'Rust bridge', s:'rust_bridge · litellm-rust/', rust:true,
+   d:'A PyO3 extension (litellm.rust_bridge._native) built by maturin from litellm-rust/crates/python-bridge. Rollout per route is controlled by LITELLM_RUST; the Python path stays as fallback. Covers chat, messages, responses, embeddings, OCR, transcription, token counting, caches and secret managers.',
+   f:['litellm/rust_bridge/{loader,configuration,catalog,dispatch}.py', 'litellm-rust/crates/{core,llms,http,framer,types}', 'litellm-rust/crates/{auth-*,secrets-*,cache-*,token-counter-*}', 'litellm-rust/crates/{host,host-python,python-bridge,callbacks-legacy-python}', 'pyproject.toml [tool.maturin] manifest-path']},
+
+  // external
+  {id:'x_llm', lane:4, row:0, t:'LLM provider APIs', s:'OpenAI, Anthropic, Bedrock …',
+   d:'The upstream model APIs. Credentials come from config, the CredentialsTable or a secret manager.',
+   f:['provider_endpoints_support.json', 'whitelisted_bedrock_models.txt']},
+  {id:'x_mcp', lane:4, row:1, t:'Upstream MCP servers', s:'from LiteLLM_MCPServerTable',
+   d:'Third-party tool servers reached over streamable HTTP, SSE or stdio, with per-user credentials and OAuth handled by the gateway.',
+   f:['litellm/proxy/mcp_registry.json']},
+  {id:'x_idp', lane:4, row:2, t:'SSO / IdP', s:'OIDC, SAML, SCIM',
+   d:'Identity providers for Admin UI login, JWT validation for API calls and SCIM provisioning of users and teams.',
+   f:['litellm/proxy/management_endpoints/ui_sso.py, sso/, scim/', 'litellm/proxy/auth/handle_jwt.py', 'LiteLLM_SSOConfig, LiteLLM_JWTKeyMapping']},
+  {id:'x_pg', lane:4, row:3, t:'PostgreSQL', s:'82 tables · read replica',
+   d:'Source of truth for identity, budgets, models, spend and configuration. Schema is owned by Prisma. Spend logs can be range-partitioned by startTime (db_scripts/partition_spend_logs.sql).',
+   f:['schema.prisma (three identical copies)', 'DATABASE_URL, DATABASE_URL_READ_REPLICA, IAM_TOKEN_DB_AUTH', 'db_scripts/ (manual backfills, partitioning, views)']},
+  {id:'x_redis', lane:4, row:4, t:'Redis / Valkey', s:'cache, counters, coordination',
+   d:'Key cache, rate limit counters, TPM/RPM and cooldowns, spend increment buffer, pod locks for background jobs, response cache and pub/sub for config sync across pods.',
+   f:['REDIS_HOST/PORT/PASSWORD or REDIS_CLUSTER_NODES', 'litellm/proxy/management_endpoints/coordination_redis_endpoints.py']},
+  {id:'x_secrets', lane:4, row:5, t:'Secret stores', s:'AWS, GCP, Vault, Azure, CyberArk',
+   d:'Where provider keys and DB passwords live in production deployments.', f:['terraform/litellm/{aws,gcp} wire these in']},
+  {id:'x_obs', lane:4, row:6, t:'Observability sinks', s:'Langfuse, Datadog, OTEL, S3 …',
+   d:'Destinations for request traces, logs and alerts emitted by the callback integrations.', f:['configured per key, team or globally via litellm_settings.callbacks']},
+  {id:'x_prom', lane:4, row:7, t:'Prometheus', s:'time series', d:'Scrapes the metrics server; Grafana or alerting sits on top.', f:['prometheus.yml']},
+];
+const E = [
+  ['c_sdk','d_gateway','HTTPS /v1/* with virtual key'],
+  ['c_agent','d_gateway','/v1/messages, /v1/skills, /v1/memory'],
+  ['c_agent','d_mcp','MCP streamable HTTP'],
+  ['c_browser','d_ui','GET /ui (or :3000)'],
+  ['c_vscode','d_gateway','POST /v1/chat/completions'],
+  ['c_vscode','d_backend','GET /model_group/info'],
+  ['c_tf','d_backend','management API'],
+  ['c_prom','d_metrics','scrape /metrics'],
+  ['d_ui','d_backend','networking.tsx fetches /key /team /user /model /spend …'],
+  ['d_ui','d_gateway','playground: /v1/chat/completions'],
+  ['d_gateway','g_auth','user_api_key_auth on every request'],
+  ['d_backend','g_auth','admin routes need admin role'],
+  ['d_mcp','g_auth','MCP auth handler'],
+  ['d_gateway','g_hooks','pre / during / post call'],
+  ['d_gateway','g_guard','guardrails + policies'],
+  ['d_gateway','g_llm','include_router × ~57'],
+  ['d_backend','g_mgmt','include_router'],
+  ['d_gateway','g_spend','cost callback per response'],
+  ['d_gateway','d_collector','spend events over socket'],
+  ['d_gateway','g_jobs','APScheduler at startup'],
+  ['d_backend','g_jobs','budget resets, key rotation'],
+  ['d_gateway','g_ent','enterprise_router + hooks'],
+  ['d_backend','g_ent','audit logging endpoints'],
+  ['d_migrate','x_pg','prisma migrate deploy'],
+  ['d_collector','x_pg','batched spend writes'],
+  ['d_metrics','x_prom','serves /metrics'],
+  ['d_mcp','s_mcpc','tool calls'],
+  ['d_mcp','g_db','MCPServerTable, toolsets, user credentials'],
+  ['g_auth','s_cache','key lookup via DualCache'],
+  ['g_auth','g_db','cache miss: VerificationToken, Team, User'],
+  ['g_hooks','s_cache','rate limit counters, budget reservations'],
+  ['g_guard','g_db','GuardrailsTable, PolicyTable'],
+  ['g_llm','s_router','route_request()'],
+  ['g_llm','s_main','direct litellm.* when no router'],
+  ['g_mgmt','g_db','CRUD via repositories'],
+  ['g_mgmt','x_idp','SSO login, SCIM'],
+  ['g_spend','s_cache','spend increment buffer'],
+  ['g_spend','g_db','SpendLogs, Daily*Spend'],
+  ['g_jobs','g_spend','update_spend every 60s'],
+  ['g_jobs','g_db','reset budgets, sync deployments'],
+  ['g_db','x_pg','Prisma (PgBouncer optional)'],
+  ['s_router','s_main','acompletion()'],
+  ['s_router','s_cache','TPM/RPM, cooldowns'],
+  ['s_main','s_llms','ProviderConfig'],
+  ['s_llms','s_http','transform_request / transform_response'],
+  ['s_http','x_llm','HTTPS'],
+  ['s_main','s_rust','LITELLM_RUST opt-in routes'],
+  ['s_rust','x_llm','native HTTP client'],
+  ['s_main','s_log','Logging object'],
+  ['s_log','s_integ','success / failure events'],
+  ['s_log','g_spend','_ProxyDBLogger'],
+  ['s_integ','x_obs','traces, logs, alerts'],
+  ['s_integ','d_metrics','PROMETHEUS_MULTIPROC_DIR'],
+  ['s_cache','x_redis','redis-py'],
+  ['s_secrets','x_secrets','fetch at startup'],
+  ['s_secrets','s_rust','dispatch'],
+  ['s_mcpc','x_mcp','streamable HTTP / SSE'],
+  ['d_gateway','s_secrets','resolve os.environ/ in config'],
+];
+
+const NW = 224, NH = 54, ROW = 70, TOP = 58, LANE_X = [16, 292, 568, 844, 1120];
+const byId = Object.fromEntries(N.map(n => [n.id, n]));
+N.forEach(n => { n.x = LANE_X[n.lane]; n.y = TOP + n.row * ROW; });
+const maxRow = Math.max(...N.map(n => n.row));
+const W = LANE_X[4] + NW + 16, H = TOP + (maxRow + 1) * ROW + 6;
+
+function edgePath(a, b) {
+  const ay = a.y + NH / 2, by = b.y + NH / 2;
+  if (b.lane > a.lane) {
+    const x1 = a.x + NW, x2 = b.x, dx = (x2 - x1) * 0.5;
+    return `M${x1},${ay} C${x1 + dx},${ay} ${x2 - dx},${by} ${x2},${by}`;
+  }
+  if (b.lane < a.lane) {
+    const x1 = a.x, x2 = b.x + NW, dx = (x1 - x2) * 0.5;
+    return `M${x1},${ay} C${x1 - dx},${ay} ${x2 + dx},${by} ${x2},${by}`;
+  }
+  const x = a.x + NW, bulge = 46;
+  return `M${x},${ay} C${x + bulge},${ay} ${x + bulge},${by} ${x},${by}`;
+}
+function midPoint(a, b) {
+  const ay = a.y + NH / 2, by = b.y + NH / 2;
+  if (b.lane === a.lane) return [a.x + NW + 36, (ay + by) / 2];
+  const x1 = b.lane > a.lane ? a.x + NW : a.x, x2 = b.lane > a.lane ? b.x : b.x + NW;
+  return [(x1 + x2) / 2, (ay + by) / 2 - 6];
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function renderArch() {
+  const laneHead = LANES.map((l, i) =>
+    `<text class="lane-title" x="${LANE_X[i]}" y="20">${l.title}</text><text class="lane-sub" x="${LANE_X[i]}" y="36">${l.sub}</text>` +
+    `<line x1="${LANE_X[i]}" y1="44" x2="${LANE_X[i] + NW}" y2="44" stroke="${l.color}" stroke-width="2"/>`).join('');
+  const edges = E.map(([f, t, l], i) => {
+    const a = byId[f], b = byId[t]; const [mx, my] = midPoint(a, b);
+    return `<g class="edge" data-i="${i}" data-f="${f}" data-t="${t}"><path d="${edgePath(a, b)}" marker-end="url(#arrow)"/><text x="${mx}" y="${my}" text-anchor="middle">${esc(l)}</text></g>`;
+  }).join('');
+  const nodes = N.map(n => {
+    const color = n.rust ? 'var(--lane-rust)' : LANES[n.lane].color;
+    return `<g class="node" data-id="${n.id}" tabindex="0" role="button" aria-label="${esc(n.t)}" transform="translate(${n.x},${n.y})">
+      <rect width="${NW}" height="${NH}"/><rect class="bar" width="4" height="${NH}" fill="${color}" rx="0"/>
+      <text x="14" y="22">${esc(n.t)}</text><text class="sub" x="14" y="40">${esc(n.s)}</text></g>`;
+  }).join('');
+  document.getElementById('archScroll').innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Service graph: clients call the gateway and backend, which use proxy internals, the SDK core and external systems">
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      ${laneHead}${edges}${nodes}</svg>`;
+  document.querySelectorAll('#archScroll .node').forEach(g => {
+    g.addEventListener('click', () => selectNode(g.dataset.id));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNode(g.dataset.id); } });
+  });
+  selectNode(null);
+}
+let selectedNode = null;
+function selectNode(id) {
+  selectedNode = id === selectedNode ? null : id;
+  const sel = selectedNode;
+  const near = new Set();
+  document.querySelectorAll('#archScroll .edge').forEach(g => {
+    const on = sel && (g.dataset.f === sel || g.dataset.t === sel);
+    g.classList.toggle('on', !!on); g.classList.toggle('off', !!sel && !on);
+    g.querySelector('path').setAttribute('marker-end', on ? 'url(#arrowOn)' : 'url(#arrow)');
+    if (on) { near.add(g.dataset.f); near.add(g.dataset.t); }
+  });
+  if (!document.getElementById('arrowOn')) {
+    const defs = document.querySelector('#archScroll defs');
+    defs.insertAdjacentHTML('beforeend', '<marker id="arrowOn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>');
+  }
+  document.querySelectorAll('#archScroll .node').forEach(g => {
+    g.classList.toggle('sel', g.dataset.id === sel);
+    g.classList.toggle('dim', !!sel && !near.has(g.dataset.id));
+  });
+  const panel = document.getElementById('archPanel');
+  if (!sel) {
+    panel.innerHTML = `<div class="kicker">Select a service</div><h3>Reading the graph</h3>
+      <p class="desc">Click a box to see its role, the files behind it and every edge it takes part in. The single-image proxy that most people run is the gateway box plus the Admin UI mount, on port 4000.</p>
+      <ul><li>Lifecycle of a call is drawn separately below.</li><li>Postgres tables are grouped by domain further down.</li></ul>`;
+    return;
+  }
+  const n = byId[sel];
+  const out = E.filter(e => e[0] === sel), inc = E.filter(e => e[1] === sel);
+  const row = (e, dir) => `<li class="edge-row"><span class="dir">${dir}</span><span><b>${esc(byId[dir === '→' ? e[1] : e[0]].t)}</b> <span style="color:var(--muted)">· ${esc(e[2])}</span></span></li>`;
+  panel.innerHTML = `<div class="kicker">${esc(LANES[n.lane].title)}${n.rust ? ' · Rust' : ''}</div><h3>${esc(n.t)}</h3>
+    <p class="desc">${esc(n.d)}</p>
+    <div><div class="kicker" style="margin-bottom:6px">Key files</div><ul>${n.f.map(f => `<li><code>${esc(f)}</code></li>`).join('')}</ul></div>
+    ${out.length ? `<div><div class="kicker" style="margin-bottom:6px">Calls / writes to</div><ul>${out.map(e => row(e, '→')).join('')}</ul></div>` : ''}
+    ${inc.length ? `<div><div class="kicker" style="margin-bottom:6px">Called / fed by</div><ul>${inc.map(e => row(e, '←')).join('')}</ul></div>` : ''}
+    <button type="button" id="clearNode">Clear selection</button>`;
+  document.getElementById('clearNode').addEventListener('click', () => selectNode(sel));
+}
+
+/* ---------------- lifecycle strip ---------------- */
+const STAGES = [
+  {t:'Middleware', s:'proxy/middleware', rd:'', pg:''},
+  {t:'Auth', s:'user_api_key_auth', rd:'key cache', pg:'on miss'},
+  {t:'Hooks', s:'pre_call hooks', rd:'rate limits', pg:''},
+  {t:'Guardrails', s:'policy_engine', rd:'', pg:''},
+  {t:'Route', s:'route_request', rd:'TPM/RPM', pg:''},
+  {t:'Provider call', s:'llms + custom_httpx', rd:'', pg:''},
+  {t:'Cost', s:'cost_calculator', rd:'', pg:''},
+  {t:'Callbacks', s:'Logging callbacks', rd:'', pg:''},
+  {t:'Spend writer', s:'DBSpendUpdateWriter', rd:'buffer', pg:'batch / 60s'},
+];
+function renderLife() {
+  const sw = 136, gap = 22, sh = 50, y0 = 26, x0 = 16;
+  const width = x0 * 2 + STAGES.length * sw + (STAGES.length - 1) * gap;
+  const rdY = 134, pgY = 186;
+  let g = '';
+  STAGES.forEach((st, i) => {
+    const x = x0 + i * (sw + gap);
+    g += `<g class="stage"><rect x="${x}" y="${y0}" width="${sw}" height="${sh}"/><text x="${x + 10}" y="${y0 + 21}">${esc(st.t)}</text><text class="sub" x="${x + 10}" y="${y0 + 38}">${esc(st.s)}</text></g>`;
+    if (i < STAGES.length - 1) g += `<path class="flow" d="M${x + sw},${y0 + sh / 2} L${x + sw + gap - 2},${y0 + sh / 2}" marker-end="url(#larrow)"/>`;
+    const cx = x + sw / 2;
+    if (st.rd) g += `<path class="touch rd" d="M${cx},${y0 + sh} L${cx},${rdY - 2}"/><text class="store" x="${cx}" y="${rdY + 16}" text-anchor="middle">${esc(st.rd)}</text>`;
+    if (st.pg) g += `<path class="touch pg" d="M${cx + (st.rd ? 14 : 0)},${y0 + sh} L${cx + (st.rd ? 14 : 0)},${pgY - 2}"/><text class="store" x="${cx + (st.rd ? 14 : 0)}" y="${pgY + 16}" text-anchor="middle">${esc(st.pg)}</text>`;
+  });
+  const lastX = x0 + (STAGES.length - 1) * (sw + gap) + sw;
+  g += `<g class="storebox rd"><rect x="${x0}" y="${rdY}" width="${lastX - x0}" height="26"/><text class="store" x="${x0 + 8}" y="${rdY + 17}">Redis</text></g>`;
+  g += `<g class="storebox pg"><rect x="${x0}" y="${pgY}" width="${lastX - x0}" height="26"/><text class="store" x="${x0 + 8}" y="${pgY + 17}">Postgres</text></g>`;
+  g += `<text class="sub" x="${x0}" y="${pgY + 48}">Response returns to the client after the provider call; cost, callbacks and the spend write happen asynchronously with the x-litellm-response-cost header already set.</text>`;
+  document.getElementById('lifeSvg').innerHTML = `<svg viewBox="0 0 ${width} ${pgY + 60}" role="img" aria-label="Stages of a chat completion through the proxy and the store each stage touches">
+    <defs><marker id="larrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge-on)"/></marker></defs>${g}</svg>`;
+}
+
+/* ---------------- database map ---------------- */
+const DOMAINS = [
+  {id:'identity', title:'Identity and access', c:'--d0', note:'Who can call what. Keys hang off users, teams, orgs and projects; ObjectPermission scopes MCP servers, vector stores and agents per entity.'},
+  {id:'budget', title:'Budgets and tags', c:'--d1', note:'Reusable budget rows referenced by orgs, teams, keys, end users, tags and model access groups.'},
+  {id:'models', title:'Models and configuration', c:'--d2', note:'Deployments and credentials stored in the DB (STORE_MODEL_IN_DB) plus proxy settings the UI edits.'},
+  {id:'spend', title:'Spend and request logs', c:'--d3', note:'One SpendLogs row per request, rolled up nightly into Daily*Spend tables per user, team, org, end user, agent, tag and tool.'},
+  {id:'mcp', title:'Agents, MCP and tools', c:'--d4', note:'Registered MCP servers and toolsets, per-user credentials, discovered tools, skills, memory and the Claude Code plugin marketplace.'},
+  {id:'guard', title:'Guardrails and policies', c:'--d5', note:'Guardrail definitions, versioned policies, where they attach, and daily metrics for both.'},
+  {id:'files', title:'Managed files and vector stores', c:'--d6', note:'Proxy-owned ids for files, batches, fine-tune jobs and vector stores mapped to provider objects.'},
+  {id:'routing', title:'Routing experiments and evals', c:'--d7', note:'State for the adaptive and auto routers plus shadow evaluation jobs comparing models.'},
+  {id:'workflow', title:'Workflows', c:'--d8', note:'Runs, events and messages for long-running agent workflows.'},
+  {id:'ops', title:'Operations and archives', c:'--d9', note:'Worker heartbeats, cron job locks, notifications, and archive copies of deleted teams and keys.'},
+];
+const T = [
+  ['OrganizationTable','identity','organization_id',18,'Top of the hierarchy; owns teams and users'],
+  ['TeamTable','identity','team_id',35,'Team with models, budgets, members and org'],
+  ['UserTable','identity','user_id',33,'Internal user or admin; SSO identity lands here'],
+  ['ProjectTable','identity','project_id',21,'Project scoped under a team, groups keys'],
+  ['VerificationToken','identity','token',53,'A virtual API key (hashed token) with spend, limits and scope'],
+  ['EndUserTable','identity','user_id',10,'Customer-facing end user with its own budget'],
+  ['TeamMembership','identity','(user_id, team_id)',6,'User in team with optional per-member budget'],
+  ['OrganizationMembership','identity','(user_id, organization_id)',10,'User role inside an org'],
+  ['InvitationLink','identity','id',12,'Invite tokens for onboarding users'],
+  ['ObjectPermissionTable','identity','object_permission_id',20,'Allowed MCP servers, vector stores, agents per entity'],
+  ['AccessGroupTable','identity','access_group_id',12,'Named bundles of models, MCP servers and agents assigned to teams and keys'],
+  ['JWTKeyMapping','identity','id',12,'Maps JWT claims to a virtual key'],
+  ['SSOIdentityAssertion','identity','user_id',4,'Raw SSO assertion per user'],
+  ['SSOConfig','identity','id',4,'SSO provider settings edited in the UI'],
+  ['BudgetTable','budget','budget_id',25,'max_budget, duration, rate limits, reset schedule'],
+  ['BudgetWindowSpend','budget','(entity_id, window)',7,'Spend inside the current budget window'],
+  ['ModelAccessGroupBudgetTable','budget','access_group_name',8,'Budget attached to a model access group'],
+  ['TagTable','budget','tag_name',10,'Request tags with optional budget'],
+  ['ProxyModelTable','models','model_id',9,'A deployment added via UI or API'],
+  ['ModelTable','models','id',7,'Model aliases owned by a team'],
+  ['CredentialsTable','models','credential_id',8,'Reusable provider credentials'],
+  ['Config','models','param_name',4,'Key/value proxy config stored in DB'],
+  ['ConfigOverrides','models','config_type',4,'Runtime overrides of config sections'],
+  ['CacheConfig','models','id',4,'Response cache settings'],
+  ['UISettings','models','id',4,'Admin UI preferences'],
+  ['PromptTable','models','id',9,'Managed prompt templates'],
+  ['HealthCheckTable','models','health_check_id',13,'Latest health check result per deployment'],
+  ['SearchToolsTable','models','search_tool_id',6,'Configured web search tools'],
+  ['SpendLogs','spend','request_id',35,'One row per request: tokens, cost, key, team, model, messages'],
+  ['ErrorLogs','spend','request_id',11,'Failed requests with exception details'],
+  ['AuditLog','spend','id',9,'Who changed which admin object'],
+  ['DailyUserSpend','spend','id',26,'Per user, day, model and key rollup'],
+  ['DailyTeamSpend','spend','id',27,'Per team rollup'],
+  ['DailyOrganizationSpend','spend','id',26,'Per org rollup'],
+  ['DailyEndUserSpend','spend','id',26,'Per end user rollup'],
+  ['DailyAgentSpend','spend','id',26,'Per agent rollup'],
+  ['DailyTagSpend','spend','id',27,'Per tag rollup'],
+  ['DailyToolSpend','spend','(date, tool)',7,'Per tool call rollup'],
+  ['DailyGlobalSpend','spend','id',24,'Whole-proxy rollup'],
+  ['DailyGatewayRequests','spend','(date, endpoint)',7,'Request counts per endpoint per day'],
+  ['SpendLogGuardrailIndex','spend','(request_id, guardrail_id)',4,'Which guardrails ran on a request'],
+  ['SpendLogToolIndex','spend','(request_id, tool)',3,'Which tools a request called'],
+  ['AgentsTable','mcp','agent_id',20,'Registered A2A agents'],
+  ['MCPServerTable','mcp','server_id',54,'Upstream MCP server: transport, URL, auth, allowed tools'],
+  ['MCPToolsetTable','mcp','toolset_id',8,'Named subset of tools across servers'],
+  ['MCPUserCredentials','mcp','id',6,'Per-user credentials for a server (BYOK)'],
+  ['MCPUserEnvVars','mcp','id',6,'Per-user env vars for a server'],
+  ['MCPServerOAuthClient','mcp','server_id',4,'Dynamic client registration state'],
+  ['ToolTable','mcp','tool_id',16,'Auto-discovered tools with input/output trust policy'],
+  ['SkillsTable','mcp','skill_id',14,'Skills served via /v1/skills'],
+  ['ClaudeCodePluginTable','mcp','id',10,'Claude Code plugin marketplace entries'],
+  ['MemoryTable','mcp','memory_id',10,'Memory entries scoped to user or team'],
+  ['GuardrailsTable','guard','guardrail_id',10,'Guardrail definition and vendor params'],
+  ['PolicyTable','guard','policy_id',18,'Versioned policy: conditions, guardrail pipeline'],
+  ['PolicyAttachmentTable','guard','attachment_id',13,'Where a policy applies: teams, keys, models, tags'],
+  ['DailyGuardrailMetrics','guard','(guardrail_id, date)',10,'Pass/fail counts per guardrail per day'],
+  ['DailyGuardrailUsageUnits','guard','(guardrail_id, date, key)',10,'Billable guardrail units'],
+  ['DailyPolicyMetrics','guard','(policy_id, date)',10,'Policy match counts per day'],
+  ['ManagedFileTable','files','id',12,'Unified file id to provider file mapping'],
+  ['ManagedFileContentTable','files','id',3,'Stored file bytes'],
+  ['ManagedObjectTable','files','id',15,'Batches and fine-tune jobs mapped to provider objects'],
+  ['ManagedVectorStoreTable','files','id',12,'Unified vector store id mapping'],
+  ['ManagedVectorStoresTable','files','vector_store_id',11,'Vector store registry with owner'],
+  ['ManagedVectorStoreIndexTable','files','id',8,'Index metadata for managed stores'],
+  ['AdaptiveRouterState','routing','(model_group, deployment)',7,'Learned weights per deployment'],
+  ['AdaptiveRouterSession','routing','(session_id)',20,'Per-session routing observations'],
+  ['AutoRouterBaselineComparison','routing','scope',11,'Auto router vs baseline aggregates'],
+  ['AutoRouterBaselineObservation','routing','request_id',7,'Single baseline observation'],
+  ['AutoRouterSession','routing','(session_id)',33,'Auto router session state per key'],
+  ['AutoRouterUserSession','routing','(user, session)',34,'Auto router session state per user'],
+  ['ShadowEvalJob','routing','id',18,'Shadow evaluation job comparing a target model'],
+  ['ShadowEvalAttempt','routing','id',17,'One shadow request and its verdict'],
+  ['ShadowEvalFunnel','routing','job_id',5,'Funnel counts for a job'],
+  ['WorkflowRun','workflow','run_id',12,'A workflow execution'],
+  ['WorkflowEvent','workflow','event_id',8,'Event emitted during a run'],
+  ['WorkflowMessage','workflow','message_id',8,'Message exchanged during a run'],
+  ['ProxyWorkerHeartbeat','ops','worker_id',4,'Liveness of each uvicorn worker'],
+  ['CronJob','ops','cronjob_id',5,'Which pod holds the lock for a scheduled job'],
+  ['UserNotifications','ops','request_id',5,'Pending model access requests'],
+  ['DeletedTeamTable','ops','id',34,'Archive copy written before a team is deleted'],
+  ['DeletedVerificationToken','ops','id',52,'Archive copy written before a key is deleted'],
+  ['DeprecatedVerificationToken','ops','id',5,'Old token hashes kept after key rotation'],
+];
+// [from, to, column, kind] kind: fk = declared @relation, ref = by column name
+const L = [
+  ['AgentsTable','ObjectPermissionTable','object_permission_id','fk'],
+  ['OrganizationTable','BudgetTable','budget_id','fk'],['OrganizationTable','ObjectPermissionTable','object_permission_id','fk'],
+  ['TeamTable','OrganizationTable','organization_id','fk'],['TeamTable','ModelTable','model_id','fk'],['TeamTable','ObjectPermissionTable','object_permission_id','fk'],
+  ['ProjectTable','TeamTable','team_id','fk'],['ProjectTable','BudgetTable','budget_id','fk'],['ProjectTable','ObjectPermissionTable','object_permission_id','fk'],
+  ['UserTable','OrganizationTable','organization_id','fk'],['UserTable','ObjectPermissionTable','object_permission_id','fk'],['UserTable','TeamTable','team_id','ref'],
+  ['VerificationToken','BudgetTable','budget_id','fk'],['VerificationToken','OrganizationTable','organization_id','fk'],['VerificationToken','ProjectTable','project_id','fk'],['VerificationToken','ObjectPermissionTable','object_permission_id','fk'],
+  ['VerificationToken','UserTable','user_id','ref'],['VerificationToken','TeamTable','team_id','ref'],['VerificationToken','AgentsTable','agent_id','ref'],
+  ['JWTKeyMapping','VerificationToken','token (cascade)','fk'],
+  ['DeprecatedVerificationToken','VerificationToken','active_token_id','ref'],
+  ['DeletedVerificationToken','VerificationToken','token','ref'],['DeletedTeamTable','TeamTable','team_id','ref'],
+  ['EndUserTable','BudgetTable','budget_id','fk'],['EndUserTable','ObjectPermissionTable','object_permission_id','fk'],
+  ['ModelAccessGroupBudgetTable','BudgetTable','budget_id','fk'],['TagTable','BudgetTable','budget_id','fk'],
+  ['TeamMembership','BudgetTable','budget_id','fk'],['TeamMembership','UserTable','user_id','ref'],['TeamMembership','TeamTable','team_id','ref'],
+  ['OrganizationMembership','UserTable','user_id','fk'],['OrganizationMembership','OrganizationTable','organization_id','fk'],['OrganizationMembership','BudgetTable','budget_id','fk'],
+  ['InvitationLink','UserTable','user_id, created_by, updated_by','fk'],
+  ['SSOIdentityAssertion','UserTable','user_id','ref'],
+  ['AccessGroupTable','TeamTable','assigned_team_ids[]','ref'],['AccessGroupTable','VerificationToken','assigned_key_ids[]','ref'],['AccessGroupTable','MCPServerTable','access_mcp_server_ids[]','ref'],['AccessGroupTable','AgentsTable','access_agent_ids[]','ref'],
+  ['MCPUserCredentials','UserTable','user_id','ref'],['MCPUserCredentials','MCPServerTable','server_id','ref'],
+  ['MCPUserEnvVars','UserTable','user_id','ref'],['MCPUserEnvVars','MCPServerTable','server_id','ref'],
+  ['MCPServerOAuthClient','MCPServerTable','server_id','ref'],
+  ['SpendLogs','VerificationToken','api_key (hash)','ref'],['SpendLogs','ProxyModelTable','model_id','ref'],['SpendLogs','TeamTable','team_id','ref'],['SpendLogs','OrganizationTable','organization_id','ref'],['SpendLogs','EndUserTable','end_user','ref'],['SpendLogs','AgentsTable','agent_id','ref'],
+  ['ErrorLogs','ProxyModelTable','model_id','ref'],
+  ['UserNotifications','UserTable','user_id','ref'],
+  ['DailyUserSpend','UserTable','user_id','ref'],['DailyUserSpend','VerificationToken','api_key','ref'],
+  ['DailyTeamSpend','TeamTable','team_id','ref'],['DailyTeamSpend','VerificationToken','api_key','ref'],
+  ['DailyOrganizationSpend','OrganizationTable','organization_id','ref'],['DailyOrganizationSpend','VerificationToken','api_key','ref'],
+  ['DailyEndUserSpend','EndUserTable','end_user_id','ref'],['DailyEndUserSpend','VerificationToken','api_key','ref'],
+  ['DailyAgentSpend','AgentsTable','agent_id','ref'],['DailyAgentSpend','VerificationToken','api_key','ref'],
+  ['DailyTagSpend','TagTable','tag','ref'],['DailyTagSpend','VerificationToken','api_key','ref'],
+  ['SpendLogGuardrailIndex','SpendLogs','request_id','ref'],['SpendLogGuardrailIndex','GuardrailsTable','guardrail_id','ref'],['SpendLogGuardrailIndex','PolicyTable','policy_id','ref'],
+  ['SpendLogToolIndex','SpendLogs','request_id','ref'],
+  ['ManagedFileTable','TeamTable','team_id','ref'],
+  ['ManagedObjectTable','TeamTable','team_id','ref'],['ManagedObjectTable','OrganizationTable','org_id','ref'],['ManagedObjectTable','VerificationToken','api_key','ref'],
+  ['ManagedVectorStoreTable','TeamTable','team_id','ref'],
+  ['ManagedVectorStoresTable','TeamTable','team_id','ref'],['ManagedVectorStoresTable','UserTable','user_id','ref'],
+  ['GuardrailsTable','TeamTable','team_id','ref'],
+  ['PolicyTable','PolicyTable','parent_version_id','ref'],
+  ['PolicyAttachmentTable','PolicyTable','policy_name','ref'],
+  ['DailyGuardrailMetrics','GuardrailsTable','guardrail_id','ref'],
+  ['DailyGuardrailUsageUnits','GuardrailsTable','guardrail_id','ref'],['DailyGuardrailUsageUnits','TeamTable','team_id','ref'],['DailyGuardrailUsageUnits','VerificationToken','api_key','ref'],
+  ['DailyPolicyMetrics','PolicyTable','policy_id','ref'],
+  ['ToolTable','TeamTable','team_id','ref'],
+  ['HealthCheckTable','ProxyModelTable','model_id','ref'],
+  ['MemoryTable','UserTable','user_id','ref'],['MemoryTable','TeamTable','team_id','ref'],
+  ['AutoRouterBaselineComparison','VerificationToken','api_key','ref'],
+  ['AutoRouterBaselineObservation','SpendLogs','request_id','ref'],
+  ['AutoRouterSession','VerificationToken','api_key','ref'],
+  ['AutoRouterUserSession','UserTable','user_id','ref'],['AutoRouterUserSession','VerificationToken','api_key','ref'],
+  ['ShadowEvalAttempt','ShadowEvalJob','job_id','ref'],['ShadowEvalAttempt','SpendLogs','request_id','ref'],['ShadowEvalFunnel','ShadowEvalJob','job_id','ref'],
+  ['WorkflowEvent','WorkflowRun','run_id','fk'],['WorkflowMessage','WorkflowRun','run_id','fk'],
+];
+const tById = Object.fromEntries(T.map(t => [t[0], {name:t[0], dom:t[1], pk:t[2], n:t[3], note:t[4]}]));
+const domById = Object.fromEntries(DOMAINS.map(d => [d.id, d]));
+let selectedTable = null;
+
+function renderDb() {
+  const host = document.getElementById('clusters');
+  host.innerHTML = DOMAINS.map(d => {
+    const rows = T.filter(t => t[1] === d.id);
+    return `<div class="cluster" style="--dc:var(${d.c})" data-dom="${d.id}">
+      <h3><span>${esc(d.title)}</span><small>${rows.length}</small></h3>
+      <div class="note">${esc(d.note)}</div>
+      <div class="pills">${rows.map(t => `<button type="button" class="pill" data-t="${t[0]}" title="${esc(t[4])}">${esc(t[0])}</button>`).join('')}</div></div>`;
+  }).join('');
+  host.querySelectorAll('.pill').forEach(b => b.addEventListener('click', () => selectTable(b.dataset.t)));
+  document.getElementById('dbCount').textContent = `${T.length} tables · ${L.filter(l => l[3] === 'fk').length} declared relations · ${L.filter(l => l[3] === 'ref').length} name-only references`;
+  selectTable(null);
+}
+function pillRect(name) {
+  const el = document.querySelector(`.pill[data-t="${name}"]`);
+  const host = document.getElementById('dbmap').getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return {x: r.left - host.left, y: r.top - host.top, w: r.width, h: r.height, cx: r.left - host.left + r.width / 2, cy: r.top - host.top + r.height / 2};
+}
+function linkPath(a, b) {
+  if (a === b) return null;
+  const A = pillRect(a), B = pillRect(b);
+  const dx = B.cx - A.cx, dy = B.cy - A.cy;
+  const sx = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? A.x + A.w : A.x) : A.cx;
+  const sy = Math.abs(dx) > Math.abs(dy) ? A.cy : (dy > 0 ? A.y + A.h : A.y);
+  const ex = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? B.x : B.x + B.w) : B.cx;
+  const ey = Math.abs(dx) > Math.abs(dy) ? B.cy : (dy > 0 ? B.y + B.h : B.y);
+  const mx = (sx + ex) / 2, my = (sy + ey) / 2;
+  const nx = -(ey - sy), ny = ex - sx, len = Math.hypot(nx, ny) || 1;
+  const off = Math.min(60, Math.hypot(ex - sx, ey - sy) * 0.18);
+  return {d: `M${sx},${sy} Q${mx + nx / len * off},${my + ny / len * off} ${ex},${ey}`, lx: mx + nx / len * off * 0.6, ly: my + ny / len * off * 0.6};
+}
+function drawLinks() {
+  const svg = document.getElementById('dbOverlay');
+  const host = document.getElementById('dbmap');
+  svg.setAttribute('width', host.clientWidth); svg.setAttribute('height', host.clientHeight);
+  svg.setAttribute('viewBox', `0 0 ${host.clientWidth} ${host.clientHeight}`);
+  const all = document.getElementById('allLinks').checked;
+  let out = '<defs><marker id="dbarrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>';
+  L.forEach(([f, t, col, kind]) => {
+    const active = selectedTable && (f === selectedTable || t === selectedTable);
+    if (!active && !all) return;
+    const p = linkPath(f, t); if (!p) return;
+    out += `<path class="${kind}${active ? '' : ' all'}" d="${p.d}" ${active ? 'marker-end="url(#dbarrow)"' : ''}/>`;
+    if (active) out += `<text x="${p.lx}" y="${p.ly}" text-anchor="middle">${esc(col)}</text>`;
+  });
+  svg.innerHTML = out;
+}
+function selectTable(name) {
+  selectedTable = name === selectedTable ? null : name;
+  const sel = selectedTable;
+  const near = new Set();
+  L.forEach(([f, t]) => { if (sel && (f === sel || t === sel)) { near.add(f); near.add(t); } });
+  document.querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('sel', p.dataset.t === sel);
+    p.classList.toggle('near', !!sel && near.has(p.dataset.t) && p.dataset.t !== sel);
+    p.classList.toggle('dim', !!sel && !near.has(p.dataset.t) && p.dataset.t !== sel);
+  });
+  drawLinks();
+  const panel = document.getElementById('dbPanel');
+  if (!sel) {
+    panel.innerHTML = `<div class="kicker">Select a table</div><h3>Reading the schema</h3>
+      <p class="desc">Click a table to see its primary key, column count and every link in or out, labelled with the joining column. Linked tables get an outline; unrelated tables fade.</p>
+      <ul><li>The hot tables at runtime are <code>VerificationToken</code> (auth), <code>SpendLogs</code> and the <code>Daily*Spend</code> rollups.</li><li>Every table is prefixed <code>LiteLLM_</code> in Postgres; the prefix is dropped here.</li></ul>`;
+    return;
+  }
+  const t = tById[sel];
+  const outL = L.filter(l => l[0] === sel && l[1] !== sel), inL = L.filter(l => l[1] === sel && l[0] !== sel), selfL = L.filter(l => l[0] === sel && l[1] === sel);
+  const row = (l, other) => `<div><span class="col">${esc(l[2])}${l[3] === 'ref' ? ' ·name' : ''}</span><button type="button" data-go="${other}">${esc(other)}</button></div>`;
+  panel.innerHTML = `<div class="kicker">${esc(domById[t.dom].title)}</div><h3 class="mono" style="font-size:16px">LiteLLM_${esc(t.name)}</h3>
+    <p class="desc">${esc(t.note)}</p>
+    <dl class="kv"><dt>primary key</dt><dd class="mono">${esc(t.pk)}</dd><dt>columns</dt><dd>${t.n}</dd><dt>schema</dt><dd class="mono">schema.prisma</dd></dl>
+    ${outL.length ? `<div><div class="kicker" style="margin-bottom:6px">References</div><div class="links">${outL.map(l => row(l, l[1])).join('')}</div></div>` : ''}
+    ${inL.length ? `<div><div class="kicker" style="margin-bottom:6px">Referenced by</div><div class="links">${inL.map(l => row(l, l[0])).join('')}</div></div>` : ''}
+    ${selfL.length ? `<div class="hint">Self reference via <code>${esc(selfL[0][2])}</code> (policy versions).</div>` : ''}
+    ${!outL.length && !inL.length && !selfL.length ? `<div class="hint">No links to other tables. Rows are looked up by their own key.</div>` : ''}
+    <button type="button" id="clearTable">Clear selection</button>`;
+  panel.querySelectorAll('button[data-go]').forEach(b => b.addEventListener('click', () => { selectTable(b.dataset.go); document.querySelector(`.pill[data-t="${b.dataset.go}"]`).scrollIntoView({block:'nearest'}); }));
+  document.getElementById('clearTable').addEventListener('click', () => selectTable(sel));
+}
+document.getElementById('allLinks').addEventListener('change', drawLinks);
+document.getElementById('tblSearch').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.pill').forEach(p => p.classList.toggle('hit', !!q && p.dataset.t.toLowerCase().includes(q)));
+});
+let rafId = 0;
+window.addEventListener('resize', () => { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(drawLinks); });
+
+/* ---------------- directory index ---------------- */
+const DIRS = [
+  ['litellm/', 'Python package', 'The SDK and the proxy. main.py, router.py, llms/, caching/, integrations/, secret_managers/, litellm_core_utils/, and proxy/ with the FastAPI app, auth, hooks, guardrails, policy engine, endpoint routers, management API and DB layer.'],
+  ['litellm/proxy/', 'Gateway code', 'proxy_server.py builds the app; proxy_cli.py starts it. Sub-packages per endpoint family, management_endpoints/, auth/, hooks/, db/, spend_tracking/, middleware/, _experimental/{mcp_server,out}.'],
+  ['gateway/', 'Deployable', 'Python. Same app trimmed to LLM request routes (allowlist.py) with a launcher that runs uvicorn workers and optional PgBouncer. Port 4000.'],
+  ['backend/', 'Deployable', 'Python. Same app trimmed to management routes. Port 4001. The Admin UI and Terraform provider talk to this in split deployments.'],
+  ['ui/litellm-dashboard/', 'Frontend', 'Next.js 16 + React 19 static export. ~40 dashboard routes, networking.tsx API client, vitest tests. Built into litellm/proxy/_experimental/out or served by nginx (ui/Dockerfile).'],
+  ['litellm-rust/', 'Rust workspace', '~45 crates: core request handling, provider transforms, HTTP, auth signers, secret clients, caches, token counters, cost, and the PyO3 python-bridge that becomes litellm.rust_bridge._native.'],
+  ['litellm-proxy-extras/', 'Python package', 'schema.prisma plus ~190 SQL migrations and ProxyExtrasDBManager, which runs prisma migrate deploy with lock and recovery handling.'],
+  ['enterprise/', 'Python package', 'litellm_enterprise: licensed routes, hooks, callbacks (audit logs, secret detection, PagerDuty, email), plus enterprise_ui branding template and legacy enterprise_hooks.'],
+  ['schema.prisma', 'Data model', '82 models. Identical copies live in litellm/proxy/ and litellm-proxy-extras/. Migrations may only change schema, never rewrite rows.'],
+  ['migrations/', 'Deployable', 'Container image that applies Prisma migrations before rollout (Helm pre-upgrade job, ECS task).'],
+  ['db_scripts/', 'Operator scripts', 'Manual SQL and Python: spend log partitioning, backfills, view creation, key import.'],
+  ['helm/', 'Deploy', 'litellm-helm (legacy single deployment with Postgres and Redis subcharts) and litellm (split gateway, backend, ui, migrations, collector and metrics sidecars).'],
+  ['terraform/', 'Deploy + provider', 'AWS (ECS Fargate, Aurora, ElastiCache, ALB) and GCP (Cloud Run, Cloud SQL, Memorystore) stacks, plus a Go Terraform provider for the management API.'],
+  ['docker/, Dockerfile, docker-compose*.yml, render.yaml', 'Deploy', 'Single-image builds (root Dockerfile with a ui-builder stage), hardened non-root variant behind squid, quickstart compose with Postgres, Prometheus compose, Render blueprint.'],
+  ['vscode-extension/', 'Client', 'TypeScript VS Code language-model provider that streams chat completions through the gateway.'],
+  ['tests/', 'Tests', 'tests/unit mirrors litellm/, tests/e2e drives a live proxy, tests/llm_translation covers provider transforms, tests/code_coverage_tests holds repo invariants such as the migration checker.'],
+  ['model_prices_and_context_window.json', 'Data', 'Price and capability table the cost calculator and model hub read. Backup copy inside litellm/.'],
+  ['cookbook/, examples/, docs', 'Docs', 'Notebooks and sample configs. proxy_server_config.yaml and litellm/proxy/dev_config.yaml are the reference proxy configs.'],
+  ['scripts/, ci_cd/, Makefile', 'Tooling', 'Lint and type budgets, pre-commit gates, default branch helper, release scripts.'],
+];
+document.getElementById('dirRows').innerHTML = DIRS.map(([p, k, w]) => `<tr><td><code>${esc(p)}</code></td><td><span class="tag">${esc(k)}</span></td><td>${esc(w)}</td></tr>`).join('');
+
+renderArch();
+renderLife();
+renderDb();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawLinks);
+</script>
+
+</body>
+</html>
